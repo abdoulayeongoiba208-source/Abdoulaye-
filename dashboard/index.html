@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Agent IA E-Commerce</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    header {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    .status {
+      display: inline-block;
+      padding: 8px 12px;
+      background: #10b981;
+      color: white;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .card h3 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 16px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .metric label {
+      color: #666;
+      font-size: 14px;
+    }
+    .metric value {
+      color: #667eea;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+      width: 100%;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background: #764ba2;
+    }
+    .btn-secondary {
+      background: #10b981;
+    }
+    .btn-secondary:hover {
+      background: #059669;
+    }
+    .chart {
+      margin-top: 20px;
+      height: 250px;
+      background: #f9f9f9;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+    }
+    .trending {
+      list-style: none;
+      margin-top: 10px;
+    }
+    .trending li {
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+    .trending .name {
+      color: #333;
+      font-weight: 500;
+    }
+    .trending .score {
+      color: #10b981;
+      float: right;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 10px 0;
+    }
+    .stat-label {
+      color: #999;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🚀 Agent IA E-Commerce</h1>
+      <div class="status">● En ligne</div>
+      <p style="color: #999; font-size: 14px; margin-top: 10px;">Dashboard en temps réel</p>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Ventes Aujourd'hui</div>
+        <div class="stat-number" id="todayRevenue">$0</div>
+        <div class="stat-label" id="todayOrders">0 commandes</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Produits</div>
+        <div class="stat-number" id="productCount">0</div>
+        <div class="stat-label" id="avgRating">⭐ 0/5</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">ROI Moyen</div>
+        <div class="stat-number" id="avgROI">0%</div>
+        <div class="stat-label">Tous produits</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Prédictions</div>
+        <div class="stat-number" id="trendingCount">0</div>
+        <div class="stat-label">Produits tendance</div>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="card">
+        <h3>📊 Analyse Ventes</h3>
+        <button class="btn btn-secondary" onclick="loadAnalytics()">Charger Analyse</button>
+        <div id="analytics-content"></div>
+      </div>
+
+      <div class="card">
+        <h3>🎯 Produits Tendance</h3>
+        <button class="btn btn-secondary" onclick="loadTrending()">Charger Tendances</button>
+        <ul class="trending" id="trending-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>💰 Optimisation Prix</h3>
+        <button class="btn btn-secondary" onclick="optimizePrices()">Optimiser Maintenant</button>
+        <div id="optimizer-content"></div>
+      </div>
+
+      <div class="card">
+        <h3>🌍 Performance Régions</h3>
+        <button class="btn btn-secondary" onclick="loadRegions()">Charger Régions</button>
+        <div id="regions-content"></div>
+      </div>
+
+      <div class="card">
+        <h3>📦 Alibaba Sourcing</h3>
+        <input type="text" id="searchKeyword" placeholder="Chercher produit..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+        <button class="btn btn-secondary" onclick="searchAlibaba()" style="margin-top: 10px;">Rechercher</button>
+        <div id="alibaba-content"></div>
+      </div>
+
+      <div class="card">
+        <h3>💬 WhatsApp Bot</h3>
+        <input type="text" id="customerPhone" placeholder="+1234567890" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
+        <input type="text" id="messageText" placeholder="Message..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+        <button class="btn btn-secondary" onclick="sendWhatsApp()" style="margin-top: 10px;">Envoyer</button>
+        <div id="whatsapp-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    const API = 'http://localhost:3000/api';
+    const socket = io('http://localhost:3000');
+
+    async function loadAnalytics() {
+      try {
+        const response = await fetch(`${API}/analytics/daily`);
+        const data = await response.json();
+        document.getElementById('analytics-content').innerHTML = `
+          <div class="metric">
+            <label>Revenu</label>
+            <value>$${data.metrics.totalRevenue.toFixed(2)}</value>
+          </div>
+          <div class="metric">
+            <label>Commandes</label>
+            <value>${data.metrics.totalOrders}</value>
+          </div>
+          <div class="metric">
+            <label>Panier Moyen</label>
+            <value>$${data.metrics.avgOrderValue.toFixed(2)}</value>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    async function loadTrending() {
+      try {
+        const response = await fetch(`${API}/predictions/trending`);
+        const data = await response.json();
+        const html = data.slice(0, 10).map(p => `
+          <li>
+            <span class="name">${p.name}</span>
+            <span class="score">${p.recommendation}</span>
+          </li>
+        `).join('');
+        document.getElementById('trending-list').innerHTML = html;
+        document.getElementById('trendingCount').textContent = data.length;
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    async function optimizePrices() {
+      try {
+        const response = await fetch(`${API}/optimizer/prices`, { method: 'POST', body: JSON.stringify({}) });
+        const data = await response.json();
+        document.getElementById('optimizer-content').innerHTML = `
+          <div class="metric">
+            <label>Produits Optimisés</label>
+            <value>${data.optimizations.length}</value>
+          </div>
+          <div class="metric">
+            <label>Revenu Potentiel</label>
+            <value>+$${data.totalPotentialRevenue.toFixed(2)}</value>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    async function loadRegions() {
+      try {
+        const response = await fetch(`${API}/analytics/regions`);
+        const data = await response.json();
+        const html = data.regions.slice(0, 5).map(r => `
+          <div class="metric">
+            <label>${r.region}</label>
+            <value>$${r.revenue.toFixed(0)}</value>
+          </div>
+        `).join('');
+        document.getElementById('regions-content').innerHTML = html;
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    async function searchAlibaba() {
+      const keyword = document.getElementById('searchKeyword').value;
+      if (!keyword) return;
+      try {
+        const response = await fetch(`${API}/alibaba/search?keyword=${keyword}`);
+        const data = await response.json();
+        const html = data.slice(0, 5).map(p => `
+          <div class="metric">
+            <label>${p.title || p.name}</label>
+            <value>$${p.price || 0}</value>
+          </div>
+        `).join('');
+        document.getElementById('alibaba-content').innerHTML = html;
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    async function sendWhatsApp() {
+      const phone = document.getElementById('customerPhone').value;
+      const message = document.getElementById('messageText').value;
+      if (!phone || !message) return;
+      try {
+        const response = await fetch(`${API}/whatsapp/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, message })
+        });
+        const data = await response.json();
+        document.getElementById('whatsapp-content').innerHTML = `<p>✅ Message envoyé!</p>`;
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    // Load initial data
+    window.onload = () => {
+      loadAnalytics();
+      loadTrending();
+    };
+  </script>
+</body>
+</html>
