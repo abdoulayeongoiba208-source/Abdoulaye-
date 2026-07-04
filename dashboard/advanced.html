@@ -1,0 +1,459 @@
+/**
+ * 📊 Advanced Dashboard Frontend - Professional UI
+ */
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚀 Agent IA Dashboard - Professional Analytics</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #667eea;
+      --secondary: #764ba2;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --dark: #1f2937;
+      --light: #f9fafb;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--dark);
+    }
+    .container { max-width: 1600px; margin: 0 auto; }
+    header {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 { color: var(--primary); font-size: 28px; }
+    .status-badge {
+      display: inline-block;
+      padding: 10px 16px;
+      background: var(--success);
+      color: white;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--primary);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+    }
+    .stat-label { color: #6b7280; font-size: 14px; margin-bottom: 8px; }
+    .stat-value { font-size: 32px; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+    .stat-change { font-size: 12px; color: var(--success); }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+    }
+    .card h3 {
+      color: var(--dark);
+      margin-bottom: 20px;
+      font-size: 18px;
+      border-bottom: 2px solid var(--light);
+      padding-bottom: 12px;
+    }
+    .chart-container { position: relative; height: 300px; margin-bottom: 20px; }
+    .table-container {
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead {
+      background: var(--light);
+      border-bottom: 2px solid #e5e7eb;
+    }
+    th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--dark);
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    tr:hover { background: var(--light); }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-success { background: #d1fae5; color: var(--success); }
+    .badge-warning { background: #fef3c7; color: var(--warning); }
+    .badge-danger { background: #fee2e2; color: var(--danger); }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--light);
+    }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-label { color: #6b7280; font-size: 14px; }
+    .metric-value { font-weight: 700; color: var(--primary); font-size: 16px; }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--light);
+    }
+    .tab {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6b7280;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .tab.active {
+      color: var(--primary);
+    }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--primary);
+    }
+    .loading { text-align: center; color: #6b7280; padding: 40px; }
+    .spinner {
+      border: 3px solid var(--light);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .alert-success { background: #d1fae5; color: var(--success); border-left: 4px solid var(--success); }
+    .alert-warning { background: #fef3c7; color: var(--warning); border-left: 4px solid var(--warning); }
+    .alert-danger { background: #fee2e2; color: var(--danger); border-left: 4px solid var(--danger); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>🚀 Agent IA E-Commerce</h1>
+        <p style="color: #6b7280; margin-top: 5px;">Real-time Analytics Dashboard</p>
+      </div>
+      <div class="status-badge">● Online</div>
+    </header>
+
+    <!-- Key Metrics -->
+    <div class="grid-4">
+      <div class="stat-card">
+        <div class="stat-label">💰 Total Revenue</div>
+        <div class="stat-value" id="totalRevenue">$0</div>
+        <div class="stat-change">↑ This period</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">📦 Orders</div>
+        <div class="stat-value" id="totalOrders">0</div>
+        <div class="stat-change">Last 30 days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">👥 Customers</div>
+        <div class="stat-value" id="totalCustomers">0</div>
+        <div class="stat-change">Total registered</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">📈 ROI</div>
+        <div class="stat-value" id="avgROI">0%</div>
+        <div class="stat-change">Average across products</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid-2">
+      <div class="card">
+        <h3>📊 Revenue Trend</h3>
+        <div class="chart-container">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🎯 Top Products</h3>
+        <div class="chart-container">
+          <canvas id="productsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs Section -->
+    <div class="grid-2">
+      <div class="card">
+        <h3>💡 Insights & Recommendations</h3>
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab(event, 'insights')">Insights</button>
+          <button class="tab" onclick="switchTab(event, 'recommendations')">Recommendations</button>
+        </div>
+        <div id="insights" class="tab-content">
+          <div id="insightsContent">Loading insights...</div>
+        </div>
+        <div id="recommendations" class="tab-content" style="display:none;">
+          <div id="recommendationsContent">Loading recommendations...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>⚠️ Alerts</h3>
+        <div id="alertsContent">No alerts at this time</div>
+      </div>
+    </div>
+
+    <!-- Detailed Analytics -->
+    <div class="grid-2">
+      <div class="card">
+        <h3>👥 Customer Segments</h3>
+        <div class="table-container" id="segmentsTable">Loading...</div>
+      </div>
+
+      <div class="card">
+        <h3>🎯 Churn Risk</h3>
+        <div class="table-container" id="churnTable">Loading...</div>
+      </div>
+    </div>
+
+    <!-- ROI Analysis -->
+    <div class="card" style="margin-bottom: 30px;">
+      <h3>💰 ROI Analysis</h3>
+      <div class="table-container" id="roiTable">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:3000/api';
+    const socket = io('http://localhost:3000');
+    let charts = {};
+
+    // Initialize Dashboard
+    async function initDashboard() {
+      await loadOverview();
+      await loadReport();
+      await loadROI();
+      await loadSegments();
+      await loadChurnRisk();
+      initRealtime();
+    }
+
+    async function loadOverview() {
+      try {
+        const response = await fetch(`${API}/dashboard/overview`);
+        const data = await response.json();
+        document.getElementById('totalRevenue').textContent = `$${data.revenue.toFixed(0)}`;
+        document.getElementById('totalOrders').textContent = data.orders;
+        document.getElementById('totalCustomers').textContent = data.customers;
+      } catch (error) {
+        console.error('Error loading overview:', error);
+      }
+    }
+
+    async function loadReport() {
+      try {
+        const response = await fetch(`${API}/dashboard/report?days=30`);
+        const data = await response.json();
+        
+        // Update insights
+        document.getElementById('insightsContent').innerHTML = `<p>${data.insights}</p>`;
+        
+        // Create revenue chart
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        if (charts.revenue) charts.revenue.destroy();
+        charts.revenue = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [{
+              label: 'Revenue',
+              data: [data.revenue.total * 0.2, data.revenue.total * 0.3, data.revenue.total * 0.4, data.revenue.total],
+              borderColor: '#667eea',
+              backgroundColor: 'rgba(102, 126, 234, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true } },
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      } catch (error) {
+        console.error('Error loading report:', error);
+      }
+    }
+
+    async function loadROI() {
+      try {
+        const response = await fetch(`${API}/dashboard/roi`);
+        const data = await response.json();
+        
+        let avgROI = 0;
+        if (data.length > 0) {
+          avgROI = data.reduce((sum, p) => sum + p.roi, 0) / data.length;
+        }
+        document.getElementById('avgROI').textContent = `${Math.round(avgROI)}%`;
+
+        // Create products chart
+        const ctx = document.getElementById('productsChart').getContext('2d');
+        if (charts.products) charts.products.destroy();
+        charts.products = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: data.slice(0, 5).map(p => p.name),
+            datasets: [{
+              data: data.slice(0, 5).map(p => p.roi),
+              backgroundColor: ['#667eea', '#764ba2', '#10b981', '#f59e0b', '#ef4444'],
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      } catch (error) {
+        console.error('Error loading ROI:', error);
+      }
+    }
+
+    async function loadSegments() {
+      try {
+        const response = await fetch(`${API}/dashboard/segments`);
+        const data = await response.json();
+        
+        let html = '<table><thead><tr><th>Segment</th><th>Count</th><th>Avg Spent</th></tr></thead><tbody>';
+        for (const [segment, info] of Object.entries(data)) {
+          html += `<tr>
+            <td><strong>${segment.toUpperCase()}</strong></td>
+            <td>${info.count}</td>
+            <td>$${info.avgSpent}</td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+        document.getElementById('segmentsTable').innerHTML = html;
+      } catch (error) {
+        console.error('Error loading segments:', error);
+      }
+    }
+
+    async function loadChurnRisk() {
+      try {
+        const response = await fetch(`${API}/dashboard/churn-risk`);
+        const data = await response.json();
+        
+        let html = '<table><thead><tr><th>Customer</th><th>Risk Score</th><th>Days Since Order</th></tr></thead><tbody>';
+        for (const customer of data.slice(0, 10)) {
+          const risk = customer.riskScore > 75 ? 'danger' : 'warning';
+          html += `<tr>
+            <td>${customer.email}</td>
+            <td><span class="badge badge-${risk}">${customer.riskScore}%</span></td>
+            <td>${Math.floor((new Date() - new Date(customer.lastOrder)) / (1000 * 60 * 60 * 24))} days</td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+        document.getElementById('churnTable').innerHTML = html;
+      } catch (error) {
+        console.error('Error loading churn risk:', error);
+      }
+    }
+
+    function switchTab(e, tabName) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+      e.target.classList.add('active');
+      document.getElementById(tabName).style.display = 'block';
+    }
+
+    function initRealtime() {
+      socket.on('analysis-update', (data) => {
+        console.log('Real-time update:', data);
+        loadOverview();
+      });
+    }
+
+    // Initialize on load
+    window.addEventListener('load', initDashboard);
+  </script>
+</body>
+</html>
